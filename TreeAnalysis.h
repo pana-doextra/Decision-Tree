@@ -10,6 +10,7 @@
 class TreeAnalysis {
 public:
     struct Metrics {
+        // An empty tree has height -1 because height is measured in edges.
         int height = -1;
         std::size_t nodeCount = 0;
         std::size_t internalNodeCount = 0;
@@ -41,6 +42,7 @@ public:
 private:
     const LinkedTree& tree_;
 
+    // Recursive helpers keep the public metric methods independent of traversal state.
     static int subtreeHeight(const LinkedTree::Node* node);
     static bool balanced(const LinkedTree::Node* node);
     static bool proper(const LinkedTree::Node* node);

@@ -10,6 +10,7 @@ std::vector<const LinkedTree::Node*> TreeAnalysis::preorder() const {
     const LinkedTree::Node* root = tree_.getRoot();
     if (root == nullptr) return nodes;
 
+    // Push children in reverse so the leftmost child is processed first.
     std::vector<const LinkedTree::Node*> pending(1, root);
     while (!pending.empty()) {
         const LinkedTree::Node* node = pending.back();
@@ -37,6 +38,7 @@ TreeAnalysis::Metrics TreeAnalysis::analyze() const {
         result.perfect = isPerfect();
         result.balanced = isBalanced();
     } else {
+        // These properties are defined here only for binary trees.
         result.proper = false;
         result.perfect = false;
         result.balanced = false;
@@ -88,6 +90,7 @@ bool TreeAnalysis::isBalanced() const {
 
 int TreeAnalysis::subtreeHeight(const LinkedTree::Node* node) {
     if (node == nullptr) return -1;
+    // Returning -1 for no child makes a leaf's height equal to zero edges.
     int result = -1;
     for (const LinkedTree::Node* child : node->getChildren())
         result = std::max(result, subtreeHeight(child));
@@ -102,6 +105,7 @@ bool TreeAnalysis::balanced(const LinkedTree::Node* node) {
     int firstHeight = children.empty() ? -1 : subtreeHeight(children.front());
     int secondHeight = -1;
     if (children.size() == 2) {
+        // The second height is needed only when this node has two children.
         std::list<LinkedTree::Node*>::const_iterator second = children.begin();
         ++second;
         secondHeight = subtreeHeight(*second);
@@ -126,6 +130,7 @@ bool TreeAnalysis::perfect(const LinkedTree::Node* node, int level,
     if (node == nullptr) return true;
     const std::size_t childCount = node->getChildren().size();
     if (childCount == 0) {
+        // Every leaf must match the level of the first leaf encountered.
         if (leafLevel == -1) leafLevel = level;
         return leafLevel == level;
     }
@@ -138,6 +143,7 @@ bool TreeAnalysis::perfect(const LinkedTree::Node* node, int level,
 void TreeAnalysis::writeTree(const LinkedTree::Node* node, int level,
                              std::ostream& output) {
     if (node == nullptr) return;
+    // Each level contributes exactly two dashes to the report indentation.
     for (int i = 0; i < level; ++i) output << "--";
     if (level > 0) output << "[" << node->getEdgeLabel() << "] ";
     output << node->getContent() << '\n';

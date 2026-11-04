@@ -9,6 +9,7 @@ namespace {
 bool parsePosition(const std::string& input, int& position) {
     std::istringstream stream(input);
     char extra;
+    // Reading one extra character rejects values such as "2x" or "1 2".
     return (stream >> position) && !(stream >> extra) && position > 0;
 }
 
@@ -19,6 +20,7 @@ void printRelationship(const char* label, const LinkedTree::Node* node) {
 
 void exploreNode(const LinkedTree::Node* node) {
     std::cout << "Node content: " << node->getContent() << '\n';
+    // The node API returns nullptr when a requested relationship is absent.
     printRelationship("Parent", node->getParent());
     printRelationship("First child", node->getFirstChild());
     printRelationship("Sibling", node->getSibling());
@@ -39,6 +41,7 @@ int main(int argc, char* argv[]) {
     }
 
     TreeAnalysis analysis(tree);
+    // Produce the report before entering the interactive exploration loop.
     if (!analysis.writeReport("about_tree.txt", error)) {
         std::cerr << "Error writing about_tree.txt: " << error << '\n';
         return 1;
@@ -57,6 +60,7 @@ int main(int argc, char* argv[]) {
         }
 
         int position = 0;
+        // A valid position must both parse as a positive integer and exist.
         const LinkedTree::Node* node =
             parsePosition(input, position) ? tree.findByPosition(position) : nullptr;
         if (node == nullptr) {
