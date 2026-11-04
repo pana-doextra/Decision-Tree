@@ -22,13 +22,6 @@ std::string trim(const std::string& text) {
     return text.substr(first, text.find_last_not_of(" \t\r\n\v\f") - first + 1);
 }
 
-// Recognize numeric first-line metadata even when the number overflows int.
-bool integerToken(const std::string& text) {
-    std::size_t start = (!text.empty() && (text[0] == '-' || text[0] == '+')) ? 1 : 0;
-    return start < text.size()
-        && text.find_first_not_of("0123456789", start) == std::string::npos;
-}
-
 // Require a whole integer token; stream extraction also rejects int overflow.
 bool readInt(const std::string& text, int& value) {
     std::istringstream input(text);
@@ -108,30 +101,48 @@ bool LinkedTree::loadFromFile(const std::string& filename, std::string& error) {
     if (!input) return fail(0, "could not open file");
 
     std::vector<Record> records;
-    std::string line;
-    std::size_t lineNumber = 0;
+    std::string line, firstLine;
+    std::size_t lineNumber = 0, firstLineNumber = 0;
     while (std::getline(input, line)) {
         ++lineNumber;
         if (lineNumber == 1 && line.compare(0, 3, "\xEF\xBB\xBF") == 0) line.erase(0, 3);
         if (!line.empty() && line.back() == '\r') line.pop_back();
         if (trim(line).empty()) continue;
+        if (firstLine.empty()) {
+            firstLine = line;
+            firstLineNumber = lineNumber;
+            continue;
+        }
 
         Record record;
         record.line = lineNumber;
-        std::istringstream probe(line);
-        std::string first, second;
-        probe >> first >> second;
-        if (records.empty() && line.find('\t') == std::string::npos
-            && !(integerToken(first) && integerToken(second))) {
-            record.content = line; // Content-only root: level 0, position 1.
-        } else {
-            std::string reason;
-            if (!parseRecord(line, record, reason)) return fail(lineNumber, reason);
-        }
+        std::string reason;
+        if (!parseRecord(line, record, reason)) return fail(lineNumber, reason);
         records.push_back(std::move(record));
     }
     if (input.bad() || !input.eof()) return fail(lineNumber + 1, "could not read file");
-    if (records.empty()) return fail(0, "file contains no nodes");
+    if (firstLine.empty()) return fail(0, "file contains no nodes");
+
+    // Only the root marker 0 1 selects a whitespace root record. A root later
+    // in the file means the first line is also a record in a shuffled input.
+    std::istringstream probe(firstLine);
+    std::string first, second;
+    int level = 0, position = 0;
+    probe >> first >> second;
+    const bool rootPrefix = readInt(first, level) && level == 0
+                         && readInt(second, position) && position == 1;
+    const bool rootLater = std::any_of(records.begin(), records.end(), [](const Record& r) {
+        return r.level == 0;
+    });
+    Record root;
+    root.line = firstLineNumber;
+    if (rootPrefix || rootLater || firstLine.find('\t') != std::string::npos) {
+        std::string reason;
+        if (!parseRecord(firstLine, root, reason)) return fail(firstLineNumber, reason);
+    } else {
+        root.content = firstLine;
+    }
+    records.push_back(std::move(root));
 
     std::sort(records.begin(), records.end(), [](const Record& a, const Record& b) {
         return a.position < b.position;

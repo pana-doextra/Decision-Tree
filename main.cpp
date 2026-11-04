@@ -19,10 +19,10 @@ void printRelationship(const char* label, const LinkedTree::Node* node) {
 }
 
 void exploreNode(const LinkedTree::Node* node) {
-    std::cout << "Node content: " << node->getContent() << '\n';
+    std::cout << "Node's content: " << node->getContent() << '\n';
     // The node API returns nullptr when a requested relationship is absent.
-    printRelationship("Parent", node->getParent());
-    printRelationship("First child", node->getFirstChild());
+    printRelationship("Ancestor", node->getParent());
+    printRelationship("Descendant", node->getFirstChild());
     printRelationship("Sibling", node->getSibling());
 }
 }  // namespace

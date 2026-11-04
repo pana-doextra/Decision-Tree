@@ -192,10 +192,6 @@ void TreeAnalysis::writeReport(std::ostream& output) const {
         output << "Proper: " << (result.proper ? "Yes" : "No") << '\n';
         output << "Perfect: " << (result.perfect ? "Yes" : "No") << '\n';
         output << "Balanced: " << (result.balanced ? "Yes" : "No") << '\n';
-    } else {
-        output << "Proper: N/A\n";
-        output << "Perfect: N/A\n";
-        output << "Balanced: N/A\n";
     }
 }
 
